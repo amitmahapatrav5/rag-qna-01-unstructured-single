@@ -1,7 +1,7 @@
 # Basic RAG
 
 ## Abstract
-This is a basic CLI Based RAG System.
+This is a basic CLI Based RAG System. \
 **Step 1:** data/.md file → loader → chunk → embedding → vector db \
 **Step 2:** query → retriever → prompt → LLM → parser
 
@@ -14,27 +14,27 @@ This is a basic CLI Based RAG System.
 
 
 ## Tech Stack
-- Python - **Programming Language**
-- LangChain - **Gen AI Framework** 
-- Chroma - **Vector DB**
-- Hugging Face - **API Access Token**
+- **Python**
+- **LangChain**
+- **Chroma**
+- **Hugging Face**
 
 
 ## How It Works
-1. Preprocessing (**ingest.py**)
+1. Preprocessing (ingest.py)
     - Loads Markdown files from DATA_DIRECTORY_ABSOLUTE_PATH using `DirectoryLoader` and `UnstructuredMarkdownLoader`.
     - Splits content into overlapping chunks (`chunk_size`, `chunk_overlap`) with `RecursiveCharacterTextSplitter`.
     - Embeds chunks via `HuggingFaceEmbeddings` (EMBEDDING_MODEL_REPO_ID).
     - Persists vectors to a local Chroma DB at VECTOR_DB_PERSISTENT_ABSOLUTE_PATH, under collection VECTOR_DB_NAME.
 
-2. Retrieval + Generation (**pipeline.py**)
+2. Retrieval + Generation (pipeline.py)
     - Reconnects to the same Chroma store using the same embedding model.
     - Creates a retriever (similarity).
     - Formats a concise prompt with retrieved context.
     - Calls a Hugging Face Inference endpoint model (CHAT_MODEL_REPO_ID) to generate a compact answer.
     - Returns a 2–3 line response.
 
-3. CLI App (**main.py**)
+3. CLI App (main.py)
     - A simple REPL loop to enter questions.
     - Type **exit** to quit.
 
@@ -44,7 +44,7 @@ This is a basic CLI Based RAG System.
 2. Install UV (Python package manager) **Globally** - `pip install uv`
 3. Clone the repository
     - git clone https://github.com/amitmahapatrav5/rag-qna-01-unstructured-single.git
-    - cd <repo-directory>
+    - cd repo-directory
 4. Install dependencies `uv sync`
 
 
@@ -65,19 +65,18 @@ This is a basic CLI Based RAG System.
 
 ## Customization In Code
 - Chunking
-    - chunk_size
-    - chunk_overlap
+    - `chunk_size`
+    - `chunk_overlap`
 - Retrieval type/depth
-    - search_type
-    - k
+    - `search_type`
+    - `k`
 - Prompting style
     - Modify the PromptTemplate in pipeline.py to fit desired tone/length or to include citations.
 
 
 ## Run Sequence with Example
-
-- uv run python ingest.py
-- uv run python main.py
+- `uv run python ingest.py`
+- `uv run python main.py`
 - Query: What topics are covered in the docs?
 - Answer: A concise 2–3 line response grounded in the ingested Markdown.
-- Type exit to stop.
+- Type **exit** to stop.
