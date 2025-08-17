@@ -1,48 +1,83 @@
-# Pluggable Multimodal RAG for Secure Knowledge Retrieval
+# Basic RAG
 
-## Problem Statement
-- Organizations usually have **High Volume of Data** Generation daily, primarily in the form of documents, images, and videos. 
-- Much of this data contains sensitive information, making **Confidential Nature of Data** a critical concern for secure access and handling.
-- These documents are not static, as they undergo frequent updates, and addition and deletion, highlighting the challenge of **Continuous Updates**.
-- Moreover, the data is often stored across multiple systems and platforms, leading to a **Lack of Centralization**, which makes locating specific documents a tedious process.
-- Even when a document is found, users struggle with **Inefficient Search Within Documents**, as identifying the exact section containing relevant information is time-consuming.
-- The situation is further complicated by **Diverse Data Formats**, ranging from structured files like .xlsx and .csv to unstructured ones like .pdf, .doc, and .txt.
-- Traditional search tools fall short due to **Limited Intelligent Search Capabilities**, lacking the contextual understanding needed to interpret complex queries and deliver precise results.
+## Abstract
+This is a basic CLI Based RAG System.
+**Step 1:** data/.md file → loader → chunk → embedding → vector db \
+**Step 2:** query → retriever → prompt → LLM → parser
 
-## Why Plugable?
-- Within an organization, Different Teams Are Working with their own distinct datasets, often tailored to their specific functions and responsibilities. 
-- These Team-Specific Data Are Not Shared Mutually, either due to confidentiality concerns or relevance boundaries. As a result, a solution built for Team 1 Should Not Have Access to Data of Team 2, even though the core problem, **Efficient Information Retrieval** remains consistent across teams.
-- Building separate solutions for each team would be inefficient and redundant.
-- Instead, the ideal approach is to create **One Unified System** that can be configured per team. Hence, the proposed solution is **Pluggable RAG**.
 
-## Implementation Plan
+## Features
+- Single file type: Markdown (.md)
+- Unstructured data
+- No memory (stateless Q&A)
+- Local vector store with persistence
 
-### Phase - Foundational Setup
-- Begin with Document Type Identificationto recognize all structured (.xlsx, .csv) and unstructured (.txt, .md, .pdf) formats used across teams. Develop Custom Data Loaders for each identified format to enable seamless and modular ingestion of documents.
-- Apply LLM Based Preprocessing to clean, chunk, and semantically enrich the content for better downstream retrieval.
-- Perform Vectorization and Storage by converting document chunks into embeddings and storing them in a Vector DB.
-- Enable Query Handling and Retrieval to fetch the most relevant chunks from the Vector DB based on user queries. Use Response Generation via LLMs to produce accurate, context-aware answers grounded in the retrieved content.
 
-### Phase 2 - Enhancement Phase
-- **Improvement in Data Loading** by using tools like Docling, which leverage computer vision models to accurately identify and split sections within complex documents.
-- **Improvement in Retrieval** by extracting metadata from documents using LLMs before storing them in the Vector DB and saving this metadata in a Graph DB for enhanced semantic search.
-- **Improvement in Graph DB Updates** to ensure that metadata is dynamically refreshed whenever a document is added, modified, or deleted, maintaining consistency and relevance.
-- **Improvement in Query Execution** by first searching the Graph DB for relevant metadata, then using indexing to retrieve the most useful chunks from the Vector DB, resulting in faster and more precise responses.
-- **Improvement in Response Groundness** by linking the generated answers to the original documents using metadata from the Graph DB, thereby increasing transparency and trustworthiness.
+## Tech Stack
+- Python - **Programming Language**
+- LangChain - **Gen AI Framework** 
+- Chroma - **Vector DB**
+- Hugging Face - **API Access Token**
 
-### Phase 3 - Platform Integration and Agentic RAG
-- **Platform Integration** by identifying widely used organizational tools such as JIRA, GitHub, SharePoint, Outlook, and Teams Chat, and connecting to them via APIs to ingest relevant data into the RAG system.
-- **Agentic Capabilities** by designing the RAG system to not only retrieve and respond but also take autonomous actions based on query context, retrieved data, and platform-specific workflows.
-- **MCP Server Readiness** by preparing the system architecture to support future integration with MCP Server, enabling seamless orchestration and execution of tasks across platforms through an agentic RAG framework.
 
-### Phase 4 - Multimodal Expansion
-- **Multimodal Expansion** by extending the RAG system beyond text documents to support other data types such as images, audio, and video.
-- **Multimodal Query Support** by enabling users to submit queries that can be answered using a combination of text, image, audio, or video sources, enhancing the system’s versatility and reach.
+## How It Works
+1. Preprocessing (**ingest.py**)
+    - Loads Markdown files from DATA_DIRECTORY_ABSOLUTE_PATH using `DirectoryLoader` and `UnstructuredMarkdownLoader`.
+    - Splits content into overlapping chunks (`chunk_size`, `chunk_overlap`) with `RecursiveCharacterTextSplitter`.
+    - Embeds chunks via `HuggingFaceEmbeddings` (EMBEDDING_MODEL_REPO_ID).
+    - Persists vectors to a local Chroma DB at VECTOR_DB_PERSISTENT_ABSOLUTE_PATH, under collection VECTOR_DB_NAME.
 
-## Benefits
-- **Cost-Effective Implementation**: The solution avoids expensive fine-tuning by leveraging pre-trained models making it significantly more affordable than traditional approaches.
-- **Advanced Query Handling**: Capable of answering complex, multi-hop questions that require reasoning across multiple documents, showcasing its intelligent comprehension.
-- **Plug-and-Play Architecture**: Easily integrates with various document formats and systems, allowing teams to adopt the solution without major infrastructure changes.
-- **Enhanced Data Security**: Sensitive knowledge assets are protected by maintaining the Knowledge Graph in-house, ensuring compliance with data governance and privacy standards.
-- **Improved Source Accuracy**: Metadata usage enables precise identification of source documents, increasing trust and transparency in generated responses.
-- **Sustainable Long-Term Value**: Reduces operational overhead, boosts productivity, and empowers users with intelligent access to organizational knowledge, ensuring lasting impact.
+2. Retrieval + Generation (**pipeline.py**)
+    - Reconnects to the same Chroma store using the same embedding model.
+    - Creates a retriever (similarity).
+    - Formats a concise prompt with retrieved context.
+    - Calls a Hugging Face Inference endpoint model (CHAT_MODEL_REPO_ID) to generate a compact answer.
+    - Returns a 2–3 line response.
+
+3. CLI App (**main.py**)
+    - A simple REPL loop to enter questions.
+    - Type **exit** to quit.
+
+
+## Installation
+1. Install Python: Ensure Python is installed matching the version in .python-version. 
+2. Install UV (Python package manager) **Globally** - `pip install uv`
+3. Clone the repository
+    - git clone https://github.com/amitmahapatrav5/rag-qna-01-unstructured-single.git
+    - cd <repo-directory>
+4. Install dependencies `uv sync`
+
+
+## Environment Setup
+1. Create a Hugging Face API key
+    - Edit Permission and enable below 2 permissions
+        - **Read access to contents of all public gated repos you can access**
+        - **Make calls to Inference Providers**
+
+2. Prepare .env
+    - Copy **.env.example** and rename it to **.env**.
+    - Fill in all the required variables.
+
+3. Prepare data
+    - Place one or more .md files in any local folder.
+    - Use the absolute path of that folder in the environment variable below.
+
+
+## Customization In Code
+- Chunking
+    - chunk_size
+    - chunk_overlap
+- Retrieval type/depth
+    - search_type
+    - k
+- Prompting style
+    - Modify the PromptTemplate in pipeline.py to fit desired tone/length or to include citations.
+
+
+## Run Sequence with Example
+
+- uv run python ingest.py
+- uv run python main.py
+- Query: What topics are covered in the docs?
+- Answer: A concise 2–3 line response grounded in the ingested Markdown.
+- Type exit to stop.
